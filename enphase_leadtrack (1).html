@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="LeadTrack"/>
+<title>Enphase LeadTrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --green: #1D9E75; --green-dark: #0F6E56; --green-light: #E1F5EE;
+    --bg: #F7F7F5; --surface: #FFFFFF; --border: #E8E8E4;
+    --text: #1A1A18; --muted: #7A7A76; --hint: #ADADAA;
+    --blue-bg: #E6F1FB; --blue-txt: #185FA5;
+    --purple-bg: #EEEDFE; --purple-txt: #534AB7;
+    --amber-bg: #FAEEDA; --amber-txt: #854F0B;
+    --teal-bg: #E1F5EE; --teal-txt: #0F6E56;
+    --green2-bg: #EAF3DE; --green2-txt: #3B6D11;
+    --red-bg: #FCEBEB; --red-txt: #A32D2D;
+    --radius: 14px; --radius-sm: 8px;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; }
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  .login-page { padding: 2.5rem 1.5rem; display: flex; flex-direction: column; min-height: 100vh; }
+  .login-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; }
+  .brand-icon { width: 38px; height: 38px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .brand-icon svg { width: 20px; height: 20px; }
+  .brand-name { font-size: 17px; font-weight: 600; }
+  .brand-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .login-heading { font-size: 26px; font-weight: 600; margin-bottom: 6px; }
+  .login-desc { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.5; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .field input { width: 100%; padding: 13px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); outline: none; }
+  .field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+  .btn-green { width: 100%; padding: 14px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-green:active { background: var(--green-dark); }
+  .btn-green:disabled { background: var(--hint); cursor: not-allowed; }
+  .installer-pill { background: var(--green-light); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 20px; font-size: 15px; font-weight: 500; color: var(--green-dark); display: flex; align-items: center; gap: 8px; }
+  .installer-pill svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .error-box { background: var(--red-bg); color: var(--red-txt); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .invalid-wrap { text-align: center; padding: 3rem 1.5rem; }
+  .invalid-wrap h2 { font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--red-txt); }
+  .invalid-wrap p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .login-note { margin-top: auto; padding-top: 2rem; font-size: 12px; color: var(--hint); text-align: center; line-height: 1.6; }
+
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 20; }
+  .topbar-icon { width: 28px; height: 28px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .topbar-icon svg { width: 14px; height: 14px; }
+  .topbar-title { font-size: 16px; font-weight: 600; flex: 1; }
+  .topbar-sub { font-size: 12px; color: var(--muted); }
+  .back-btn { background: none; border: none; cursor: pointer; padding: 6px; margin-left: -6px; color: var(--green); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .summary-cell { background: var(--surface); padding: 12px 8px; text-align: center; }
+  .summary-num { font-size: 20px; font-weight: 600; }
+  .summary-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .filters { display: flex; gap: 6px; padding: 10px 14px; overflow-x: auto; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-chip { flex-shrink: 0; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); background: transparent; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; }
+  .filter-chip.on { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .lead-list { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .lead-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; }
+  .lead-card:active { opacity: 0.85; }
+  .lc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .lc-name { font-size: 15px; font-weight: 600; }
+  .lc-loc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lc-meta { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; }
+  .b-new { background: var(--blue-bg); color: var(--blue-txt); }
+  .b-called { background: var(--purple-bg); color: var(--purple-txt); }
+  .b-scheduled { background: var(--amber-bg); color: var(--amber-txt); }
+  .b-quoted { background: var(--teal-bg); color: var(--teal-txt); }
+  .b-won { background: var(--green2-bg); color: var(--green2-txt); }
+  .b-lost { background: var(--red-bg); color: var(--red-txt); }
+
+  .detail-wrap { padding: 14px; }
+  .detail-info { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .detail-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .detail-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .key { color: var(--muted); }
+  .detail-row .val { color: var(--text); font-weight: 500; font-size: 13px; }
+  .section-hd { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .so { padding: 12px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); background: var(--surface); }
+  .so svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .so.sel-called { border-color: #534AB7; background: var(--purple-bg); color: var(--purple-txt); }
+  .so.sel-scheduled { border-color: #854F0B; background: var(--amber-bg); color: var(--amber-txt); }
+  .so.sel-quoted { border-color: #0F6E56; background: var(--teal-bg); color: var(--teal-txt); }
+  .so.sel-won { border-color: #3B6D11; background: var(--green2-bg); color: var(--green2-txt); }
+  .so.sel-lost { border-color: #A32D2D; background: var(--red-bg); color: var(--red-txt); }
+  .notes-area { width: 100%; min-height: 80px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); background: var(--surface); resize: none; outline: none; margin-bottom: 16px; }
+  .notes-area:focus { border-color: var(--green); }
+  .lost-reason { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); margin-bottom: 16px; outline: none; appearance: none; display: none; }
+  .lost-reason.show { display: block; }
+  .call-link { display: flex; align-items: center; gap: 8px; background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-weight: 500; text-decoration: none; margin-bottom: 16px; }
+
+  .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-size: 14px; }
+
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: #0F6E56; color: #fff; padding: 11px 22px; border-radius: 24px; font-size: 14px; font-weight: 500; z-index: 999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="s-login" class="screen active">
+  <div class="login-page">
+    <div class="login-brand">
+      <div class="brand-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5L8.5 15L16 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div><div class="brand-name">Enphase LeadTrack</div><div class="brand-sub">Field Agent App</div></div>
+    </div>
+
+    <div id="login-valid" style="display:none;">
+      <h1 class="login-heading">Your leads,<br/>one tap away.</h1>
+      <p class="login-desc">Enter your name to view your assigned leads.</p>
+      <div class="installer-pill">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 2a5 5 0 100 10A5 5 0 0010 2zM4 18a6 6 0 0112 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span id="installer-pill-name">—</span>
+      </div>
+      <div class="error-box" id="login-error">Please enter your name.</div>
+      <div class="field">
+        <label>Your name</label>
+        <input type="text" id="inp-agent" placeholder="e.g. Rajesh Kumar" autocomplete="name"/>
+      </div>
+      <button class="btn-green" id="btn-login" onclick="doLogin()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        View my leads
+      </button>
+    </div>
+
+    <div id="login-invalid" style="display:none;" class="invalid-wrap">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-bottom:16px;"><circle cx="24" cy="24" r="22" stroke="#A32D2D" stroke-width="2"/><path d="M24 14v12M24 32v2" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <h2>Invalid link</h2>
+      <p>This link is not valid.<br/>Please contact Enphase to receive your correct app link.</p>
+    </div>
+
+    <div class="login-note">Updates sync directly to your Google Sheet.</div>
+  </div>
+</div>
+
+<div id="s-list" class="screen">
+  <div class="topbar">
+    <div class="topbar-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5L8.5 15L16 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div style="flex:1;">
+      <div class="topbar-title" id="list-installer-name">My Leads</div>
+      <div class="topbar-sub" id="list-agent-name"></div>
+    </div>
+    <button style="background:none;border:none;font-size:13px;color:var(--muted);cursor:pointer;" onclick="doLogout()">Sign out</button>
+  </div>
+  <div class="summary">
+    <div class="summary-cell"><div class="summary-num" id="st-total">—</div><div class="summary-lbl">Total</div></div>
+    <div class="summary-cell"><div class="summary-num" id="st-open">—</div><div class="summary-lbl">Open</div></div>
+    <div class="summary-cell"><div class="summary-num" id="st-won">—</div><div class="summary-lbl">Won</div></div>
+    <div class="summary-cell"><div class="summary-num" id="st-lost">—</div><div class="summary-lbl">Lost</div></div>
+  </div>
+  <div class="filters" id="filter-bar"></div>
+  <div id="lead-list-container"></div>
+</div>
+
+<div id="s-detail" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <div class="topbar-title" id="detail-topbar-name" style="font-size:14px;"></div>
+  </div>
+  <div class="detail-wrap">
+    <div class="detail-info" id="detail-info-box"></div>
+    <div class="section-hd">Update status</div>
+    <div class="status-grid" id="status-grid"></div>
+    <div id="lost-reason-wrap" style="display:none;">
+      <div class="section-hd">Lost reason</div>
+      <select class="lost-reason" id="lost-reason">
+        <option value="">Select reason…</option>
+        <option>Budget constraint</option>
+        <option>Already installed</option>
+        <option>Not interested</option>
+        <option>Not reachable</option>
+        <option>Chose competitor</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="section-hd">Installer remarks</div>
+    <textarea class="notes-area" id="notes-area" placeholder="Add notes about this lead…"></textarea>
+    <button class="btn-green" id="save-btn" onclick="saveUpdate()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Save update to sheet
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = 'AIzaSyA8XFnp5a3ho1hf_a7msC-7qiGSQjmqxDo';
+const SHEET_TAB = 'Sheet1';
+
+const COL = {
+  pincode:0, firstName:1, lastName:2, email:3, phone:4, leadId:5,
+  state:7, district:8, qualDate:11, sharedDate:12,
+  connectDate:14, installerRemarks:15, quoteDate:16,
+  preorder:17, lost:18, lostReason:19,
+};
+
+const INSTALLER_CONFIG = {
+  "shashwatt_energy": { name: "Shashwatt energy", state: "Karnataka", sheetId: "1pbmIAWSj4GHf4fimQ4ucnnwMB9h6hZB4ZbasuuGECtI" },
+  "sunray": { name: "Sunray", state: "Karnataka", sheetId: "1nE5eglKR1ALhcVMEoU9HR2DB7PkgVEioK_SfaTOq8Uk" },
+  "nlite": { name: "Nlite", state: "Karnataka", sheetId: "1jvaqh487QSAYPCSemzYw3gW8LuPRiJ5OS4VYOLD6HIw" },
+  "skyenergy": { name: "Skyenergy", state: "Karnataka", sheetId: "1jayEz55WdH1TpSCJdHQiviUqDoPxg7O21JnpADD5x3I" },
+  "arrow": { name: "Arrow", state: "Karnataka", sheetId: "1fWdqhVFk7I9CR-K_TCMkqvtWe1x3NNb82wssUla2gtk" },
+  "moleyar": { name: "Moleyar", state: "Karnataka", sheetId: "1aiGJQqBkekiivTcgIcfoIAzv7-oH47JhcM8OCvwI6dQ" },
+  "ecosoch": { name: "Ecosoch", state: "Karnataka", sheetId: "1bMwYniHuHBTBtCVVHwfslRRwGDlTQseXgm6VsiCthrY" },
+  "beestone": { name: "Beestone", state: "Karnataka", sheetId: "138vouo0kmyl3wnFJwiWoLcEl8QZHdui9xJQgm1a2sj8" },
+  "hinren": { name: "Hinren", state: "Karnataka", sheetId: "1__Zv0O2VQ-trP0VRhaD1eoe-5GzoMjE5sJYr8HyYLSY" },
+  "jas_ecoenergy": { name: "Jas EcoEnergy", state: "Karnataka", sheetId: "1aGxSdCI_y_hSQyjQ_uBUz5xUDRkn4scoVGFgT3ef9ds" },
+  "orb_energy": { name: "Orb Energy", state: "Karnataka", sheetId: "1_L4ynbLlvORxlPd3MBSZomiQQy-oW1hA-zxBkSYPgG0" },
+  "plasma_solar": { name: "Plasma solar", state: "Karnataka", sheetId: "1j7uS3pr3_iTInN2_N-P8RsniCN1r-he969HxYI2c8uk" },
+  "sunpv": { name: "SunPV", state: "Karnataka", sheetId: "1D4mDVKt8Cn3S1SwR36u4ETw1l1ipXYwfRh-qUkHiKwQ" },
+  "sunshine_solar": { name: "Sunshine solar", state: "Karnataka", sheetId: "1U4oqxJPLlvpFwT2Q_eCaXAfE34v_QmnP-vwBI9KFfHs" },
+  "uniq_renewable": { name: "Uniq Renewable", state: "Karnataka", sheetId: "1PwS8ss0NTGrjUi5Yz82UKm2Qnl4yqo1jOV86HG_jofs" },
+  "secura": { name: "Secura", state: "Kerala", sheetId: "1-Hwdu83aEcQepKKhMMbLVatFDlCHCuaGfUrpsLLDOOQ" },
+  "thapas": { name: "Thapas", state: "Kerala", sheetId: "1chpe9WuZoIW4MWTGzMc7ciBNcfZnzxxxW-Fl8ph6m3s" },
+  "brillo": { name: "Brillo", state: "Kerala", sheetId: "15pkmTPgn8QGRo9A7CjlfBJuA7G_dywNyjrPJu1sYSw8" },
+  "3rd_eye": { name: "3rd eye", state: "Kerala", sheetId: "16jtRg0pBQgchTjSpxQkLQIdyNbF93rRPzHZTsux27xY" },
+  "sols": { name: "Sols", state: "Kerala", sheetId: "1CnYmMXDGpzcqr-uNZnbP0t0Cjb5v-V47qFw8cQZ0-z0" },
+  "sensol": { name: "Sensol", state: "Kerala", sheetId: "1CqTmC_B7QeayCOdx6pPL9JEntwLX4Qe6lV8BD2AkzNs" },
+  "comorin": { name: "Comorin", state: "Kerala", sheetId: "1GeuM9EKCofo1herll52KvN_rsE_vxcibE7GRp3sSO9Q" },
+  "fert": { name: "FERT", state: "Kerala", sheetId: "1ICaWJw_0_3FpWv89KSHFvNslyJhziw-oHqmsSIoEmOI" },
+  "suryakiran": { name: "Suryakiran", state: "Kerala", sheetId: "1O1OoRNn_MpXcj3S2b8U4-MlscIarET9XRIevabqNZzs" },
+  "solar_base": { name: "Solar Base", state: "Kerala", sheetId: "1NWT73ltkPa2vXhls6qTSti3FHHJJOsqzE9EcUvQSooc" },
+  "aara_solar": { name: "Aara Solar", state: "Tamil Nadu", sheetId: "1QRdTvuDqUXx-hQ6I7wGo91Mo7BLgqBf3JIUuLlxYojM" },
+  "cascade": { name: "Cascade", state: "Tamil Nadu", sheetId: "1Qr1PW5oaGFdtPix9nD0i4nXgUm3lRhFqoy7p51wRPos" },
+  "cpv": { name: "CPV", state: "Tamil Nadu", sheetId: "1TRyBDZRkPGFdRb_XAlIFty9SNkuXs_47m_Vi37Ni-zo" },
+  "diligent_wing": { name: "Diligent Wing", state: "Tamil Nadu", sheetId: "1ek06_5emMiSGe4DcEj9vpPZHqU2jGYTKC_2BbT3tMik" },
+  "amaze_solar": { name: "Amaze Solar", state: "Tamil Nadu", sheetId: "1mM9FeTIPa7jB6XMa1duFY0LRmRuo_8hhe4AewZP0i6c" },
+  "jai_solar": { name: "Jai Solar", state: "Tamil Nadu", sheetId: "1uXWwOt6cg8shWKC94cm0Glfn4tNNUb8_p-820FXbHog" },
+  "balaji_renewables": { name: "Balaji Renewables", state: "Tamil Nadu", sheetId: "1v-GrLGSSO__R1i_unhE7BIdHtRwfrlCEEoWlG-0jfmg" },
+  "shiva_sakthi": { name: "Shiva Sakthi", state: "Tamil Nadu", sheetId: "1Xlqmsu9TOCS9NaKACtQFCz3tV1qOquVjpR7LWS_bYvw" },
+  "blue_berry": { name: "Blue berry", state: "Tamil Nadu", sheetId: "1bhaWAUKVRfTF7gskujCbkmDk62xg502gcn9013z8NdQ" },
+  "electric_mart": { name: "Electric Mart", state: "Tamil Nadu", sheetId: "1CJI7fi0sBnDPpExBpkGUwhbONOVIMW1adLMF2C3EvhU" },
+  "sr_sol": { name: "SR Sol", state: "Maharashtra", sheetId: "14jnjqGX1vixd_Gf8uitVSlX0aaRsPX5qcHQrUNurB2E" },
+  "parrikrrama": { name: "Parrikrrama", state: "Maharashtra", sheetId: "16VAaMIrNXBS_TCNvdKq30-sVjQj6T-eNQf8vObwdlB4" },
+  "anu_surya": { name: "Anu Surya", state: "Maharashtra", sheetId: "1HqdBtr_yBA8Dxv1_l26cxh1CXMFtFKf6jOQAp8d3FSo" },
+  "marich": { name: "Marich", state: "Maharashtra", sheetId: "1_k0Wect3IlC6GZhIjb3HyFIGSfVHrr7zFhAN__X1fyE" },
+  "senergy": { name: "Senergy", state: "Maharashtra", sheetId: "1Ty6QSfq7rzhMufomIhL4HKRrxLWBOb6FQqgULt6tlLk" },
+  "pusha_green": { name: "Pusha Green", state: "Maharashtra", sheetId: "1f_1ivLwNskjvaMFJRpJu54qAhaCbVQyzJTjiDva98BM" },
+  "windsun": { name: "Windsun", state: "Maharashtra", sheetId: "1dNHLurxdXC5yoA8NDOPPHJEWzO-FAK7lGPO4cUihTDk" },
+  "prosumer": { name: "Prosumer", state: "Maharashtra", sheetId: "1YyJD4D_X7RmmXMxLmW8lFublSYoTBJHcrv_z9R1zRzI" },
+  "bridgeway": { name: "Bridgeway", state: "Delhi", sheetId: "1bfnWy0bsCkkV2LK-88cKcBWdm3IJp8D_Zk3OCeuOU_0" },
+  "advanced_solar": { name: "Advanced Solar", state: "Delhi", sheetId: "1eE_mTFGe6ui4nY5UPWvOwz2RU-8T32LDyxno7x_90FE" },
+  "techno_power": { name: "Techno Power", state: "Delhi", sheetId: "1xc_jVZh0z3OJxPWWt0MaRlpxAX5fw8Y8C212P__hxf4" },
+};
+
+// Script URLs will be added here after Apps Script deployment
+const SCRIPT_URLS = {};
+
+let state = {
+  installerKey: null, installerCfg: null, agentName: '',
+  leads: [], filter: 'all', currentLead: null, selectedStatus: null,
+};
+
+const STATUS_META = [
+  { key:'called',    label:'Called',           selCls:'sel-called',    icon:'<svg viewBox="0 0 20 20" fill="none"><path d="M5 3h3l1.5 4L8 8.5a9 9 0 004.5 4.5L14 11.5l4 1.5v3A1 1 0 0117 17C8.163 17 3 11.837 3 5a1 1 0 011-1l1-.001z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+  { key:'scheduled', label:'Visit scheduled',  selCls:'sel-scheduled', icon:'<svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h14M7 3v4M13 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' },
+  { key:'quoted',    label:'Quote shared',     selCls:'sel-quoted',    icon:'<svg viewBox="0 0 20 20" fill="none"><path d="M12 3H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V8l-4-5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 3v5h5M7 11h6M7 14h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' },
+  { key:'won',       label:'Order confirmed',  selCls:'sel-won',       icon:'<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+  { key:'lost',      label:'Lost / no interest', selCls:'sel-lost',    icon:'<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 7.5l5 5M12.5 7.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' },
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const key = params.get('installer');
+  if (!key || !INSTALLER_CONFIG[key]) {
+    document.getElementById('login-invalid').style.display = 'block';
+    return;
+  }
+  state.installerKey = key;
+  state.installerCfg = INSTALLER_CONFIG[key];
+  document.getElementById('installer-pill-name').textContent =
+    state.installerCfg.name + ' · ' + state.installerCfg.state;
+  document.getElementById('login-valid').style.display = 'block';
+});
+
+async function doLogin() {
+  const agent = document.getElementById('inp-agent').value.trim();
+  const errBox = document.getElementById('login-error');
+  errBox.style.display = 'none';
+  if (!agent) { errBox.textContent = 'Please enter your name.'; errBox.style.display = 'block'; return; }
+  state.agentName = agent;
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Loading leads…';
+  try {
+    await fetchLeads();
+    document.getElementById('list-installer-name').textContent = state.installerCfg.name;
+    document.getElementById('list-agent-name').textContent = agent;
+    showScreen('s-list');
+    renderList();
+  } catch(e) {
+    errBox.textContent = 'Could not load leads. Check your internet connection.';
+    errBox.style.display = 'block';
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> View my leads';
+  }
+}
+
+function doLogout() {
+  state = { installerKey:null, installerCfg:null, agentName:'', leads:[], filter:'all', currentLead:null, selectedStatus:null };
+  showScreen('s-login');
+}
+
+async function fetchLeads() {
+  const { sheetId } = state.installerCfg;
+  const range = encodeURIComponent(SHEET_TAB + '!A2:T');
+  const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '/values/' + range + '?key=' + API_KEY;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Sheets API error: ' + res.status);
+  const data = await res.json();
+  const rows = data.values || [];
+  state.leads = [];
+  rows.forEach((row, i) => {
+    const lead = {
+      rowIndex: i + 2,
+      pincode: row[COL.pincode]||'', firstName: row[COL.firstName]||'',
+      lastName: row[COL.lastName]||'', email: row[COL.email]||'',
+      phone: row[COL.phone]||'', leadId: row[COL.leadId]||('row-'+(i+2)),
+      state: row[COL.state]||'', district: row[COL.district]||'',
+      qualDate: row[COL.qualDate]||'', sharedDate: row[COL.sharedDate]||'',
+      connectDate: row[COL.connectDate]||'', installerRemarks: row[COL.installerRemarks]||'',
+      quoteDate: row[COL.quoteDate]||'', preorder: row[COL.preorder]||'',
+      lost: row[COL.lost]||'', lostReason: row[COL.lostReason]||'',
+    };
+    lead.status = deriveStatus(lead);
+    if (lead.firstName || lead.phone) state.leads.push(lead);
+  });
+}
+
+function deriveStatus(l) {
+  if (l.lost === 'Yes') return 'lost';
+  if (l.preorder === 'Yes') return 'won';
+  if (l.quoteDate) return 'quoted';
+  if (l.connectDate) return 'called';
+  return 'new';
+}
+
+async function writeToSheet(lead, newStatus, notes, lostReason) {
+  const today = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+  const connectDate = newStatus !== 'new' ? (lead.connectDate || today) : lead.connectDate;
+  const quoteDate   = (newStatus === 'quoted' || newStatus === 'won') ? (lead.quoteDate || today) : lead.quoteDate;
+  const preorder    = newStatus === 'won' ? 'Yes' : (newStatus === 'lost' ? 'No' : lead.preorder);
+  const lostVal     = newStatus === 'lost' ? 'Yes' : (newStatus === 'won' ? 'No' : lead.lost);
+  const lostReas    = newStatus === 'lost' ? lostReason : lead.lostReason;
+
+  const scriptUrl = SCRIPT_URLS[state.installerKey];
+  if (!scriptUrl) throw new Error('No script URL configured for this installer yet.');
+
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    body: JSON.stringify({
+      rowIndex: lead.rowIndex,
+      connectDate, installerRemarks: notes,
+      quoteDate, preorder, lost: lostVal, lostReason: lostReas,
+    }),
+  });
+  const result = await res.json();
+  if (!result.success) throw new Error(result.error || 'Write failed');
+
+  lead.connectDate = connectDate; lead.installerRemarks = notes;
+  lead.quoteDate = quoteDate; lead.preorder = preorder;
+  lead.lost = lostVal; lead.lostReason = lostReas;
+  lead.status = deriveStatus(lead);
+}
+
+function renderList() {
+  const { leads, filter } = state;
+  const won = leads.filter(l=>l.status==='won').length;
+  const lost = leads.filter(l=>l.status==='lost').length;
+  document.getElementById('st-total').textContent = leads.length;
+  document.getElementById('st-open').textContent  = leads.length - won - lost;
+  document.getElementById('st-won').textContent   = won;
+  document.getElementById('st-lost').textContent  = lost;
+
+  const filters = [{key:'all',label:'All'},{key:'new',label:'New'},{key:'called',label:'Called'},
+    {key:'scheduled',label:'Scheduled'},{key:'quoted',label:'Quoted'},{key:'won',label:'Won'},{key:'lost',label:'Lost'}];
+  document.getElementById('filter-bar').innerHTML = filters.map(f =>
+    '<button class="filter-chip'+(filter===f.key?' on':'')+'" onclick="setFilter(\''+f.key+'\')">'+f.label+'</button>'
+  ).join('');
+
+  const shown = filter === 'all' ? leads : leads.filter(l => l.status === filter);
+  const container = document.getElementById('lead-list-container');
+  if (shown.length === 0) { container.innerHTML = '<div class="empty">No leads in this category</div>'; return; }
+  container.innerHTML = '<div class="lead-list">' + shown.map(l =>
+    '<div class="lead-card" onclick="openLead(\''+l.leadId+'\')">'+
+    '<div class="lc-top"><div><div class="lc-name">'+l.firstName+' '+l.lastName+'</div>'+
+    '<div class="lc-loc">'+( l.district||l.state)+' · '+l.pincode+'</div></div>'+
+    '<span class="badge b-'+l.status+'">'+badgeLabel(l.status)+'</span></div>'+
+    '<div class="lc-meta"><span>'+l.phone+'</span>'+(l.qualDate?'<span>'+l.qualDate+'</span>':'')+'</div></div>'
+  ).join('') + '</div>';
+}
+
+function badgeLabel(s) {
+  return {new:'New',called:'Called',scheduled:'Scheduled',quoted:'Quoted',won:'Won',lost:'Lost'}[s]||'New';
+}
+function setFilter(key) { state.filter = key; renderList(); }
+
+function openLead(leadId) {
+  const lead = state.leads.find(l => l.leadId === leadId);
+  if (!lead) return;
+  state.currentLead = lead;
+  state.selectedStatus = lead.status !== 'new' ? lead.status : null;
+  document.getElementById('detail-topbar-name').textContent = lead.firstName + ' ' + lead.lastName;
+  document.getElementById('notes-area').value = lead.installerRemarks || '';
+  const lostSel = document.getElementById('lost-reason');
+  lostSel.value = lead.lostReason || '';
+  document.getElementById('lost-reason-wrap').style.display = lead.status === 'lost' ? 'block' : 'none';
+  lostSel.className = 'lost-reason' + (lead.status === 'lost' ? ' show' : '');
+
+  document.getElementById('detail-info-box').innerHTML =
+    '<div class="detail-name">'+lead.firstName+' '+lead.lastName+'</div>'+
+    '<div style="margin-bottom:12px;"><span class="badge b-'+lead.status+'">'+badgeLabel(lead.status)+'</span></div>'+
+    '<a class="call-link" href="tel:'+lead.phone+'"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M5 3h3l1.5 4L8 8.5a9 9 0 004.5 4.5L14 11.5l4 1.5v3A1 1 0 0117 17C8.163 17 3 11.837 3 5a1 1 0 011-1l1-.001z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Call '+lead.phone+'</a>'+
+    '<div class="detail-row"><span class="key">Location</span><span class="val">'+lead.district+', '+lead.state+'</span></div>'+
+    '<div class="detail-row"><span class="key">PIN code</span><span class="val">'+lead.pincode+'</span></div>'+
+    (lead.email?'<div class="detail-row"><span class="key">Email</span><span class="val" style="font-size:12px;word-break:break-all;">'+lead.email+'</span></div>':'')+
+    (lead.qualDate?'<div class="detail-row"><span class="key">Qualified on</span><span class="val">'+lead.qualDate+'</span></div>':'')+
+    (lead.connectDate?'<div class="detail-row"><span class="key">First contact</span><span class="val">'+lead.connectDate+'</span></div>':'');
+
+  document.getElementById('status-grid').innerHTML = STATUS_META.map(s =>
+    '<div class="so'+(state.selectedStatus===s.key?' '+s.selCls:'')+'" onclick="selectStatus(\''+s.key+'\')">'+s.icon+' '+s.label+'</div>'
+  ).join('');
+  showScreen('s-detail');
+}
+
+function selectStatus(key) {
+  state.selectedStatus = key;
+  document.getElementById('status-grid').innerHTML = STATUS_META.map(s =>
+    '<div class="so'+(key===s.key?' '+s.selCls:'')+'" onclick="selectStatus(\''+s.key+'\')">'+s.icon+' '+s.label+'</div>'
+  ).join('');
+  document.getElementById('lost-reason-wrap').style.display = key === 'lost' ? 'block' : 'none';
+  const lostSel = document.getElementById('lost-reason');
+  lostSel.className = 'lost-reason' + (key === 'lost' ? ' show' : '');
+}
+
+async function saveUpdate() {
+  if (!state.selectedStatus) { showToast('Please select a status first', true); return; }
+  const notes = document.getElementById('notes-area').value.trim();
+  const lostReason = document.getElementById('lost-reason').value;
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Saving…';
+  try {
+    await writeToSheet(state.currentLead, state.selectedStatus, notes, lostReason);
+    showToast('Sheet updated!');
+    setTimeout(() => { renderList(); showScreen('s-list'); }, 1200);
+  } catch(e) {
+    console.error(e);
+    showToast('Could not save — Apps Script not set up yet.', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Save update to sheet';
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goBack() { renderList(); showScreen('s-list'); }
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isErr ? '#A32D2D' : '#0F6E56';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
